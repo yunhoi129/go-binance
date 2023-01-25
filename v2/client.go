@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -418,9 +419,58 @@ func (c *Client) callAPI(ctx context.Context, r *request, opts ...RequestOption)
 		if e != nil {
 			c.debug("failed to unmarshal json: %s", e)
 		}
+		apiErr.Data = string(data)
 		return nil, apiErr
 	}
 	return data, nil
+}
+
+func (c *Client) callAPIWithHeader(ctx context.Context, r *request, opts ...RequestOption) (data []byte, header *http.Header, err error) {
+	err = c.parseRequest(r, opts...)
+	if err != nil {
+		return []byte{}, &http.Header{}, err
+	}
+	req, err := http.NewRequest(r.method, r.fullURL, r.body)
+	if err != nil {
+		return []byte{}, &http.Header{}, err
+	}
+	req = req.WithContext(ctx)
+	req.Header = r.header
+	c.debug("request: %#v", req)
+	f := c.do
+	if f == nil {
+		f = c.HTTPClient.Do
+	}
+	res, err := f(req)
+	if err != nil {
+		return []byte{}, &http.Header{}, err
+	}
+	data, err = io.ReadAll(res.Body)
+	if err != nil {
+		return []byte{}, &http.Header{}, err
+	}
+	defer func() {
+		cerr := res.Body.Close()
+		// Only overwrite the retured error if the original error was nil and an
+		// error occurred while closing the body.
+		if err == nil && cerr != nil {
+			err = cerr
+		}
+	}()
+	c.debug("response: %#v", res)
+	c.debug("response body: %s", string(data))
+	c.debug("response status code: %d", res.StatusCode)
+
+	if res.StatusCode >= http.StatusBadRequest {
+		apiErr := new(common.APIError)
+		e := json.Unmarshal(data, apiErr)
+		if e != nil {
+			c.debug("failed to unmarshal json: %s", e)
+		}
+		apiErr.Data = string(data)
+		return nil, &http.Header{}, apiErr
+	}
+	return data, &res.Header, nil
 }
 
 // SetApiEndpoint set api Endpoint
@@ -967,4 +1017,20 @@ func (c *Client) NewSubAccountListService() *SubAccountListService {
 // NewGetUserAsset Get user assets, just for positive data
 func (c *Client) NewGetUserAsset() *GetUserAssetService {
 	return &GetUserAssetService{c: c}
+}
+
+func (c *Client) NewCreateTwapOrderSerivce() *CreateTwapOrderService {
+	return &CreateTwapOrderService{c: c}
+}
+
+func (c *Client) NewCancelTwapOrderService() *CancelTwapOrderService {
+	return &CancelTwapOrderService{c: c}
+}
+
+func (c *Client) NewListHistoricalTwapOrderSerivce() *ListHistoricalTwapOrderService {
+	return &ListHistoricalTwapOrderService{c: c}
+}
+
+func (c *Client) NewOpenTwapOrderService() *OpenTwapOrderService {
+	return &OpenTwapOrderService{c: c}
 }
