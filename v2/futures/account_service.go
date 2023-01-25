@@ -47,22 +47,58 @@ type GetAccountService struct {
 }
 
 // Do send request
-func (s *GetAccountService) Do(ctx context.Context, opts ...RequestOption) (res *Account, err error) {
+func (s *GetAccountService) Do(ctx context.Context, opts ...RequestOption) (res *AccountV2, err error) {
 	r := &request{
 		method:   http.MethodGet,
-		endpoint: "/fapi/v1/account",
+		endpoint: "/fapi/v2/account",
 		secType:  secTypeSigned,
 	}
 	data, _, err := s.c.callAPI(ctx, r, opts...)
 	if err != nil {
 		return nil, err
 	}
-	res = new(Account)
+	res = new(AccountV2)
 	err = json.Unmarshal(data, res)
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
+}
+
+type AccountV2 struct {
+	FeeTier                     int    `json:"feeTier"`
+	CanTrade                    bool   `json:"canTrade"`
+	CanDeposit                  bool   `json:"canDeposit"`
+	CanWithdraw                 bool   `json:"canWithdraw"`
+	UpdateTime                  int    `json:"updateTime"`
+	MultiAssetsMargin           bool   `json:"multiAssetsMargin"`
+	TotalInitialMargin          string `json:"totalInitialMargin"`
+	TotalMaintMargin            string `json:"totalMaintMargin"`
+	TotalWalletBalance          string `json:"totalWalletBalance"`
+	TotalUnrealizedProfit       string `json:"totalUnrealizedProfit"`
+	TotalMarginBalance          string `json:"totalMarginBalance"`
+	TotalPositionInitialMargin  string `json:"totalPositionInitialMargin"`
+	TotalOpenOrderInitialMargin string `json:"totalOpenOrderInitialMargin"`
+	TotalCrossWalletBalance     string `json:"totalCrossWalletBalance"`
+	TotalCrossUnPnl             string `json:"totalCrossUnPnl"`
+	AvailableBalance            string `json:"availableBalance"`
+	MaxWithdrawAmount           string `json:"maxWithdrawAmount"`
+	Assets                      []struct {
+		Asset                  string `json:"asset"`
+		WalletBalance          string `json:"walletBalance"`
+		UnrealizedProfit       string `json:"unrealizedProfit"`
+		MarginBalance          string `json:"marginBalance"`
+		MaintMargin            string `json:"maintMargin"`
+		InitialMargin          string `json:"initialMargin"`
+		PositionInitialMargin  string `json:"positionInitialMargin"`
+		OpenOrderInitialMargin string `json:"openOrderInitialMargin"`
+		MaxWithdrawAmount      string `json:"maxWithdrawAmount"`
+		CrossWalletBalance     string `json:"crossWalletBalance"`
+		CrossUnPnl             string `json:"crossUnPnl"`
+		AvailableBalance       string `json:"availableBalance"`
+		MarginAvailable        bool   `json:"marginAvailable"`
+		UpdateTime             int    `json:"updateTime"`
+	} `json:"assets"`
 }
 
 // Account define account info
