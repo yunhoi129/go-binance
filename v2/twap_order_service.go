@@ -206,23 +206,8 @@ func (s *ListHistoricalTwapOrderService) Do(ctx context.Context, opts ...Request
 }
 
 type ListHistoricalTwapOrderResponse struct {
-	Total  int `json:"total"`
-	Orders []struct {
-		AlgoID       int    `json:"algoId"`
-		Symbol       string `json:"symbol"`
-		Side         string `json:"side"`
-		PositionSide string `json:"positionSide"`
-		TotalQty     string `json:"totalQty"`
-		ExecutedQty  string `json:"executedQty"`
-		ExecutedAmt  string `json:"executedAmt"`
-		AvgPrice     string `json:"avgPrice"`
-		ClientAlgoID string `json:"clientAlgoId"`
-		BookTime     int64  `json:"bookTime"`
-		EndTime      int64  `json:"endTime"`
-		AlgoStatus   string `json:"algoStatus"`
-		AlgoType     string `json:"algoType"`
-		Urgency      string `json:"urgency"`
-	} `json:"orders"`
+	Total  int          `json:"total"`
+	Orders []BTwapOrder `json:"orders"`
 }
 
 type CancelTwapOrderService struct {
@@ -289,21 +274,23 @@ func (s *OpenTwapOrderService) Do(ctx context.Context, opt ...RequestOption) (re
 }
 
 type OpenTwapOrderResponse struct {
-	Total  int `json:"total"`
-	Orders []struct {
-		AlgoID       int    `json:"algoId"`
-		Symbol       string `json:"symbol"`
-		Side         string `json:"side"`
-		PositionSide string `json:"positionSide"`
-		TotalQty     string `json:"totalQty"`
-		ExecutedQty  string `json:"executedQty"`
-		ExecutedAmt  string `json:"executedAmt"`
-		AvgPrice     string `json:"avgPrice"`
-		ClientAlgoID string `json:"clientAlgoId"`
-		BookTime     int64  `json:"bookTime"`
-		EndTime      int64  `json:"endTime"`
-		AlgoStatus   string `json:"algoStatus"`
-		AlgoType     string `json:"algoType"`
-		Urgency      string `json:"urgency"`
-	} `json:"orders"`
+	Total  int          `json:"total"`
+	Orders []BTwapOrder `json:"orders"`
+}
+
+type BTwapOrder struct {
+	AlgoID       int    `json:"algoId"`
+	Symbol       string `json:"symbol"`
+	Side         string `json:"side"`
+	PositionSide string `json:"positionSide"`
+	TotalQty     string `json:"totalQty"`
+	ExecutedQty  string `json:"executedQty"`
+	ExecutedAmt  string `json:"executedAmt"`
+	AvgPrice     string `json:"avgPrice"`
+	ClientAlgoID string `json:"clientAlgoId"`
+	BookTime     int64  `json:"bookTime"`
+	EndTime      int64  `json:"endTime"`
+	AlgoStatus   string `json:"algoStatus"`
+	AlgoType     string `json:"algoType"`
+	Urgency      string `json:"urgency"`
 }
