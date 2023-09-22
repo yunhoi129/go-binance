@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 // Endpoints
@@ -1041,7 +1043,7 @@ type WsAccountConfigUpdate struct {
 type WsUserDataHandler func(event *WsUserDataEvent)
 
 // WsUserDataServe serve user data handler with listen key
-func WsUserDataServe(listenKey string, handler WsUserDataHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
+func WsUserDataServe(listenKey string, handler WsUserDataHandler, errHandler ErrHandler) (c *websocket.Conn, doneC, stopC chan struct{}, err error) {
 	endpoint := fmt.Sprintf("%s/%s", getWsEndpoint(), listenKey)
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
@@ -1053,5 +1055,5 @@ func WsUserDataServe(listenKey string, handler WsUserDataHandler, errHandler Err
 		}
 		handler(event)
 	}
-	return wsServe(cfg, wsHandler, errHandler)
+	return wsServeWithConn(cfg, wsHandler, errHandler)
 }

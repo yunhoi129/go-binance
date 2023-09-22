@@ -72,6 +72,54 @@ var wsServe = func(cfg *WsConfig, handler WsHandler, errHandler ErrHandler) (don
 	return
 }
 
+var wsServeWithConn = func(cfg *WsConfig, handler WsHandler, errHandler ErrHandler) (c *websocket.Conn, doneC, stopC chan struct{}, err error) {
+	Dialer := websocket.Dialer{
+		Proxy:             http.ProxyFromEnvironment,
+		HandshakeTimeout:  45 * time.Second,
+		EnableCompression: false,
+	}
+
+	c, _, err = Dialer.Dial(cfg.Endpoint, nil)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	c.SetReadLimit(655350)
+	doneC = make(chan struct{})
+	stopC = make(chan struct{})
+	go func() {
+		// This function will exit either on error from
+		// websocket.Conn.ReadMessage or when the stopC channel is
+		// closed by the client.
+		defer close(doneC)
+		if WebsocketKeepalive {
+			keepAlive(c, WebsocketTimeout)
+		}
+		// Wait for the stopC channel to be closed.  We do that in a
+		// separate goroutine because ReadMessage is a blocking
+		// operation.
+		silent := false
+		go func() {
+			select {
+			case <-stopC:
+				silent = true
+			case <-doneC:
+			}
+			c.Close()
+		}()
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				if !silent {
+					errHandler(err)
+				}
+				return
+			}
+			handler(message)
+		}
+	}()
+	return
+}
+
 func keepAlive(c *websocket.Conn, timeout time.Duration) {
 	ticker := time.NewTicker(timeout)
 
